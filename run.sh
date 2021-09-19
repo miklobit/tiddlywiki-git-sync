@@ -1,25 +1,16 @@
 #! /bin/sh
 
 set -e
-root_path=$(pwd)
 
-init() {
-    if [ -e wiki ]; then
-        echo "'wiki' already exists, aborting"
-        exit 1
+init()
+    if [ -f /creds ]; then
+        return
     fi
-
-    mkdir wiki
-    cd wiki
-    git init
-
     git config pull.rebase false
 
     if [ -n "${COMMITER_NAME}" ]; then
         if [ -z "${COMMITER_EMAIL}" ]; then
             echo "if COMMITER_NAME is set then COMMITER_EMAIL must be set as well"
-            cd ..
-            rm -rf wiki
             exit 1
         fi
 
@@ -28,49 +19,28 @@ init() {
     fi
 
     if [ -n "$CREDENTIALS" ]; then
-        git config credential.helper "store --file ${root_path}/creds"
-        echo "$CREDENTIALS" > "${root_path}"/creds
+        git config credential.helper "store --file /creds"
+        echo "$CREDENTIALS" > /creds
     fi
 
     git remote add origin "$CLONEPATH"
-    git fetch origin --depth=1
-    git checkout master
-    git pull
-
-    cd ..
-}
-
-on_terminate() {
-    pid=$1
-    kill -int $pid
-
-    while $(kill -0 $pid 2> /dev/null); do
-        sleep 1
-    done
-
-    sync_repo
-    cd ..
-    rm -rf wiki
 }
 
 
 sync_repo() {
     if [ -z "$(git status --short)" ]; then
+        echo "Mo changes in files..."
         return
     fi
     git add .
     git commit -m "Automatic commit at $(date)"
     git pull --strategy-option=ours --no-edit
-    git push
+    git push origin master
 }
 
-
+echo "Start sync script..."
 init
-./node_modules/.bin/tiddlywiki wiki --listen port=${PORT:-8080} host=${BIND:-127.0.0.1} $OPTIONS &
-wikipid=$!
-cd wiki
-
-trap "on_terminate $wikipid" EXIT
+cd /wiki
 while true; do
     sleep ${PERIOD:-5m} && sync_repo
 done
