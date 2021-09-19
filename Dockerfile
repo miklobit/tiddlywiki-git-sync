@@ -3,4 +3,5 @@ RUN apk add git
 
 VOLUME /wiki
 COPY run.sh ./
-CMD ["./run.sh"]
+ENTRYPOINT ["./run.sh"]
+CMD ["--single"]

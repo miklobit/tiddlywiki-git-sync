@@ -2,10 +2,7 @@
 
 set -e
 
-init()
-    if [ -f /creds ]; then
-        return
-    fi
+init() {
     git config pull.rebase false
 
     if [ -n "${COMMITER_NAME}" ]; then
@@ -18,11 +15,6 @@ init()
         git config user.email "$COMMITER_EMAIL"
     fi
 
-    if [ -n "$CREDENTIALS" ]; then
-        git config credential.helper "store --file /creds"
-        echo "$CREDENTIALS" > /creds
-    fi
-
     git remote add origin "$CLONEPATH"
 }
 
@@ -32,15 +24,36 @@ sync_repo() {
         echo "Mo changes in files..."
         return
     fi
+    if [ ! -f /creds ]; then
+       if [ -n "$CREDENTIALS" ]; then
+         git config credential.helper "store --file /creds"
+         echo "$CREDENTIALS" > /creds
+       else
+         echo "Missing credentials..."
+         exit 1 
+       fi
+
+    fi
+
     git add .
     git commit -m "Automatic commit at $(date)"
     git pull --strategy-option=ours --no-edit
     git push origin master
 }
 
-echo "Start sync script..."
-init
+echo "Start sync script with $1 ..."
 cd /wiki
-while true; do
+if [ $1 == "--init" ]; then
+   init
+   echo "Git init complete..."
+   exit 0
+elif [ $1 == "--single" ]; then
+   sync_repo
+   exit 0
+elif [ $1 == "--cyclic" ]; then
+  while true; do
+    echo "Waiting ${PERIOD:-5m}"
     sleep ${PERIOD:-5m} && sync_repo
-done
+  done
+fi
+
