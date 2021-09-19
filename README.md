@@ -39,14 +39,6 @@ must follow the format: `https://<username>:<password>@<host>`.
 Name and E-main of the commits' author. Required if git's `user.name` and
 `user.email` configuration values are not set.
 
-`PORT` <br>
-TCP/IP port that the server is going to listen to. Default: 8080.
-
-`BIND`<br>
-The IP address that the server is going to bind on. Default: 127.0.0.1.
-
-`OPTIONS`<br>
-Additional options to be passed to the server.
 
 `PERIOD`<br>
 How often to perform "commit-pull-push" operation. Uses the same syntax as the
